@@ -15,9 +15,9 @@ import com.fathzer.soft.javaluator.*;
 public class Engine{
 	
 	private static final String TRAIN_URL = "src/cwk_train.csv";
-	private static final int STARTING_POP = 100;
+	private static final int STARTING_POP = 1000;
 	private static double MUTATION_PROBABILITY = 0.3;
-	private static final int ITERATIONS = 100;
+	private static final int ITERATIONS = 200;
 	private static final int SELECTION_METHOD = 1;
 	private static final int TOURNAMENT_METHOD = 1;
 	
@@ -30,7 +30,9 @@ public class Engine{
 			evaluate(currentFunctions);
 			ArrayList<Function> sub = selectSubPopulation(SELECTION_METHOD,currentFunctions);
 			ArrayList<Function> winners = tournament(TOURNAMENT_METHOD,sub);
-			System.out.print("Iteration: "+i+ " Best is: " + winners.get(0).getWeighting());
+			
+			System.out.print("Iteration: "+i+ " Best is: " + winners.get(0).getScore()+"\n");
+			
 			ArrayList<Function> mutantOffspring = mutatePop(clonePopulation(uniformCrossOver(winners.get(0),winners.get(1))));
 			currentFunctions = mutantOffspring;
 		}
@@ -88,7 +90,7 @@ public class Engine{
 		if(method == 1){
 			ArrayList<Function> ordered = new ArrayList<Function>();
 			ordered = bestToWorst(subPopulation);
-			System.out.println(ordered.toString().toString());
+			System.out.println(ordered.get(0).getWeighting());
 			parents.add(ordered.get(0));
 			parents.add(ordered.get(1));
 		}
@@ -170,6 +172,7 @@ public class Engine{
 		ArrayList<ArrayList<String>> iterationFitnesses = new ArrayList<ArrayList<String>>();
 				for(int i = 0; i<functions.size(); i++){
 					Double fitness = 0.0;
+					Double score = 0.0;
 					// for every function
 					for(int j = 0; j<dataSet.size(); j++){
 						//for every data row
@@ -177,9 +180,14 @@ public class Engine{
 						ArrayList<ExpressionPart> expression = formExpression(functions.get(i), dataSet.get(j));
 						Double result = evaluator.evaluate(listToString(formExpression(functions.get(i), dataSet.get(j))));
 						fitness += weighting(result, dataSet.get(j).getExpected());	
+						score += score(result,dataSet.get(j).getExpected());
+						
 					}
 					fitness = fitness/dataSet.size();
+					score = score/dataSet.size();
 					functions.get(i).setWeighting(fitness);
+					functions.get(i).setScore(score);
+					
 				}
 	}
 	
@@ -205,15 +213,8 @@ public class Engine{
 	}
 	
 	public Double score(Double number, Double expected){
-		if(number>expected){
-			return number - expected;
-		}
-		else if(expected<number){
-			return 0.0 - (expected - number);
-		}
-		else{
-			return 0.0;
-		}
+			return Math.abs(number) - Math.abs(expected);
+		
 	}
 	
 	public Double weighting(Double number, Double expected){

@@ -6,6 +6,7 @@ public class Function implements Comparator<Function>{
 	
 	ArrayList<Operator> function = new ArrayList<Operator>();
 	Double weighting = 100.0;
+	Double score = 0.0;
 	
 	public Function(ArrayList<Operator> exp){ 
 		for(int i = 0; i<exp.size();i++){
@@ -31,6 +32,14 @@ public class Function implements Comparator<Function>{
 	
 	public void setWeighting(Double w){
 		weighting = w;
+	}
+	
+	public Double getScore(){
+		return score;
+	}
+	
+	public void setScore(Double s){
+		score = s;
 	}
 
 	@Override
