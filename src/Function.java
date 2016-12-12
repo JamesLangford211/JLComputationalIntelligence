@@ -1,9 +1,11 @@
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 
-public class Function {
+public class Function implements Comparator<Function>{
 	
 	ArrayList<Operator> function = new ArrayList<Operator>();
+	Double weighting = 100.0;
 	
 	public Function(ArrayList<Operator> exp){ 
 		for(int i = 0; i<exp.size();i++){
@@ -22,5 +24,20 @@ public class Function {
 			}
 		return str;
 	}
+	
+	public Double getWeighting(){
+		return weighting;
+	}
+	
+	public void setWeighting(Double w){
+		weighting = w;
+	}
+
+	@Override
+	public int compare(Function o1, Function o2) {
+		return o1.getWeighting().compareTo(o2.getWeighting());
+	}
+
+	
 
 }

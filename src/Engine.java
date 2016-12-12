@@ -10,36 +10,111 @@ import java.util.Scanner;
 import java.util.Stack;
 import com.fathzer.soft.javaluator.*;
 
-public class Engine {
+
+
+public class Engine{
 	
 	private static final String TRAIN_URL = "src/cwk_train.csv";
-	private static final int STARTING_POP = 5;
+	private static final int STARTING_POP = 100;
 	private static double MUTATION_PROBABILITY = 0.3;
-	private static final int ITERATIONS = 1;
+	private static final int ITERATIONS = 100;
+	private static final int SELECTION_METHOD = 1;
+	private static final int TOURNAMENT_METHOD = 1;
 	
 	private ArrayList<Row> dataSet = popDataTable(TRAIN_URL);
 	private DoubleEvaluator evaluator = new DoubleEvaluator();
 	
 	public Engine(){
 		ArrayList<Function> currentFunctions = initialFunctionList(STARTING_POP);
-		System.out.println(evaluate(currentFunctions).toString());
+		for(int i = 0; i<ITERATIONS; i++){
+			evaluate(currentFunctions);
+			ArrayList<Function> sub = selectSubPopulation(SELECTION_METHOD,currentFunctions);
+			ArrayList<Function> winners = tournament(TOURNAMENT_METHOD,sub);
+			System.out.print("Iteration: "+i+ " Best is: " + winners.get(0).getWeighting());
+			ArrayList<Function> mutantOffspring = mutatePop(clonePopulation(uniformCrossOver(winners.get(0),winners.get(1))));
+			currentFunctions = mutantOffspring;
+		}
+
+	}
+	
+	public ArrayList<Function> clonePopulation(Function clone){
+		ArrayList<Function> newPopulation = new ArrayList<Function>();
+		for(int i = 0; i<STARTING_POP; i++){
+			newPopulation.add(clone);
+		}
+		return newPopulation;
+	}
+	
+	public Function uniformCrossOver(Function f1, Function f2){
 		
-		currentFunctions = mutatePop(currentFunctions);
-		System.out.println(evaluate(currentFunctions).toString());
+		Random random = new Random();
+		Double parentBoolean = 50.0;
+		ArrayList<Operator> childArray = new ArrayList<Operator>();
+		
+		for(int i = 0; i<f1.getFunction().size();i++){
+			Double dieRoll = random.nextDouble()*100;
+			if(dieRoll < parentBoolean){
+				childArray.add(f1.getFunction().get(i));
+				parentBoolean -= 100 / (f1.getFunction().size());
+			}
+			else{
+				childArray.add(f2.getFunction().get(i));
+				parentBoolean += 100 / (f1.getFunction().size());
+			}
+		}
+		
+		Function child = new Function(childArray);
+		return child;
+	}
+	
+	public ArrayList<Function> selectSubPopulation(int method, ArrayList<Function> population){
+		ArrayList<Function> subPopulation = new ArrayList<Function>();
+		
+		//Pick a random 20% of the population
+		if(method == 1){
+			Double d = population.size() * 0.2;
+			int size = (int) d.doubleValue();
+			for(int i = 0; i<size; i++){
+				Random r = new Random();
+				subPopulation.add(population.get(r.nextInt(size)));	
+			}
+		}
+		return subPopulation;
+	}
+	
+	public ArrayList<Function> tournament(int method, ArrayList<Function> subPopulation){
+		ArrayList<Function> parents = new ArrayList<Function>();
+		//Pick the two best (testing purposes mainly)
+		if(method == 1){
+			ArrayList<Function> ordered = new ArrayList<Function>();
+			ordered = bestToWorst(subPopulation);
+			System.out.println(ordered.toString().toString());
+			parents.add(ordered.get(0));
+			parents.add(ordered.get(1));
+		}
+		return parents;
+	}
+	
+	public ArrayList<Function> bestToWorst(ArrayList<Function> functions){
+		
+		ArrayList<Function> clone = new ArrayList<Function>(functions);
+		Collections.sort(clone, new CustomComparator());
+		Collections.reverse(clone);
+		return clone;	
 	}
 	
 	public ArrayList<Function> mutatePop(ArrayList<Function> population){
 		ArrayList<Function> mutatedPop = new ArrayList<Function>();
 		for(int i = 0; i<population.size();i++){
 			mutatedPop.add(population.get(i));
-			for(int j = 0; j<population.get(i).getFunction().size(); j++){
-				Random r = new Random();
-				double randomValue = r.nextDouble();
-				if(randomValue<=MUTATION_PROBABILITY){
-					mutatedPop.get(i).getFunction().get(j).changeRandomly();
-				}
-				
+			Random r = new Random();
+			double randomValue = r.nextDouble();
+			if(randomValue < MUTATION_PROBABILITY){
+					int random = r.nextInt(population.get(i).getFunction().size());
+					population.get(i).getFunction().get(random).changeRandomly();
 			}
+			
+			
 		}
 		return mutatedPop;
 	}
@@ -90,7 +165,7 @@ public class Engine {
 		}
 	}
 	
-	public ArrayList<ArrayList<String>> evaluate(ArrayList<Function> functions){
+	public void evaluate(ArrayList<Function> functions){
 		
 		ArrayList<ArrayList<String>> iterationFitnesses = new ArrayList<ArrayList<String>>();
 				for(int i = 0; i<functions.size(); i++){
@@ -104,13 +179,8 @@ public class Engine {
 						fitness += weighting(result, dataSet.get(j).getExpected());	
 					}
 					fitness = fitness/dataSet.size();
-					ArrayList<String> fitnessRow = new ArrayList<String>();
-					fitnessRow.add(""+fitness);
-					fitnessRow.add(functions.get(i).toString());
-					iterationFitnesses.add(fitnessRow);
+					functions.get(i).setWeighting(fitness);
 				}
-					
-		return iterationFitnesses;
 	}
 	
 	public ArrayList<ExpressionPart> formExpression(Function ops, Row data){
@@ -169,6 +239,30 @@ public class Engine {
 			return true;
 		}
 		return false;
+	}
+	
+	public void test(){
+		ArrayList<Operator> o1 = new ArrayList<Operator>();
+		ArrayList<Operator> o2 = new ArrayList<Operator>();
+		
+		o1.add(new Operator('+'));
+		o1.add(new Operator('+'));
+		o1.add(new Operator('+'));
+		o1.add(new Operator('+'));
+		
+		o2.add(new Operator('-'));
+		o2.add(new Operator('-'));
+		o2.add(new Operator('-'));
+		o2.add(new Operator('-'));
+		
+		Function f1 = new Function(o1);
+		Function f2 = new Function(o2);
+		
+		//System.out.println(f1.toString());
+		//System.out.println(f2.toString());
+		
+		//System.out.println(uniformCrossOver(f1,f2));
+		
 	}
 	
 }
